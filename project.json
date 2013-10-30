@@ -1,0 +1,30 @@
+{
+	"version": 1,
+	"config": {
+		"android": {
+			"signingKeyStore": "",
+			"signingKeyStorePass": "",
+			"signingKeyAlias": "",
+			"signingKeyPass": ""
+		},
+		"screenSize": [
+			600,
+			400
+		],
+		"loadingScene": "",
+		"screenMode": "fit",
+		"projectId": "demo_box2d",
+		"quadTreeSize": 1048576,
+		"defaultLanguage": "en",
+		"supportedLanguages": [
+			"en",
+			"de"
+		]
+	},
+	"startScene": "demo_box2d.scene.Scene1",
+	"type": "project",
+	"apiVersion": "0.8.47",
+	"scenes": [
+		"demo_box2d.scene.Scene1"
+	]
+}

@@ -1,0 +1,9 @@
+{
+	"version": 1,
+	"type": "system",
+	"dependencies": [
+		"demo_box2d.voiceSample"
+	],
+	"input": [],
+	"config": []
+}

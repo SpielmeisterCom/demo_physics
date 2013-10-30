@@ -1,0 +1,41 @@
+{
+	"version": 1,
+	"type": "asset",
+	"subtype": "animation",
+	"config": {
+		"duration": 1000,
+		"frameIds": [
+			0,
+			1,
+			3,
+			2,
+			1,
+			3,
+			0
+		],
+		"rotation": 0,
+		"transformation": [
+			0,
+			0
+		],
+		"scale": [
+			0,
+			0
+		],
+		"dependencyNode": {
+			"libraryId": "demo_box2d.glowingBoxAnimation",
+			"children": [
+				{
+					"libraryId": "demo_box2d.glowingBox",
+					"children": [],
+					"iconCls": "tree-asset-spritesheet-icon",
+					"isStatic": true
+				}
+			],
+			"iconCls": "tree-asset-2danimation-icon",
+			"isStatic": true
+		}
+	},
+	"assetId": "spriteSheet:demo_box2d.glowingBox",
+	"dependencies": []
+}

@@ -1,0 +1,14 @@
+{
+	"version": 1,
+	"type": "asset",
+	"subtype": "spriteSheet",
+	"config": {
+		"textureWidth": 32,
+		"textureHeight": 8,
+		"frameWidth": 8,
+		"frameHeight": 8,
+		"innerPadding": null
+	},
+	"file": "glowingBox.png",
+	"dependencies": []
+}
