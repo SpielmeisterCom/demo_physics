@@ -33,7 +33,10 @@ define(
 		 * @param {Object} [spell] The spell object.
 		 */
 		var physics = function( spell ) {
+            this.entityCreatedHandler
+            this.entityDestroyHandler
 			this.world
+            this.removedEntitiesQueue = []
 		}
 
         var createBody = function( spell, world, entityId, entity ) {
@@ -98,14 +101,12 @@ define(
             world.addRigidBody( physicsBody )
         }
 
-        var incrementState = function( entityManager, world, bodies, transforms ) {
-            var store = [];
-            //TODO: find a solution for getting all shapes
-            var count = world.shapeRectangleQuery([0,0,100,100], store);
+        var incrementState = function( entityManager, rigidBodies, bodies, transforms ) {
+            var length = rigidBodies.length,
+                i      = 0
 
-            for( var i = 0; i < count; i++ ) {
-                var shape = store[i],
-                    body  = shape.body
+            for( i = 0; i < length; i++ ) {
+                var body = rigidBodies[i]
 
                 if( body.isStatic() ) {
 
@@ -119,7 +120,7 @@ define(
                 var position  = body.getPosition(),
                     transform = transforms[ id ]
 
-                if( !transform ) continue
+                if( !transform || ( !position[0] || !position[1] ) ) continue
 
                 transform.translation[ 0 ] = position[0]
                 transform.translation[ 1 ] = position[1]
@@ -141,12 +142,12 @@ define(
                 });
 
                 this.entityCreatedHandler = _.bind( createBody, null, spell, this.world )
-//                this.entityDestroyHandler = _.bind( this.removedEntitiesQueue.push, this.removedEntitiesQueue )
+                this.entityDestroyHandler = _.bind( this.removedEntitiesQueue.push, this.removedEntitiesQueue )
 
                 var eventManager = spell.eventManager
 
                 eventManager.subscribe( eventManager.EVENT.ENTITY_CREATED, this.entityCreatedHandler )
-  //              eventManager.subscribe( eventManager.EVENT.ENTITY_REMOVED, this.entityDestroyHandler )
+                eventManager.subscribe( eventManager.EVENT.ENTITY_REMOVED, this.entityDestroyHandler )
 			},
 
 			/**
@@ -189,7 +190,8 @@ define(
 
                 world.step( deltaTimeInMs / 1000 )
 
-                incrementState( spell.entityManager, world, this.bodies, transforms )
+                incrementState( spell.entityManager, world.rigidBodies, this.bodies, transforms )
+                //TODO: clear all removed entites from the physik world
 			}
 		}
 		
