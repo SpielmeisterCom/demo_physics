@@ -10,15 +10,9 @@
 				}
 			},
 			{
-				"id": "spell.system.physics",
+				"id": "demo_physics.physics",
 				"config": {
-					"active": true,
-					"debug": true,
-					"gravity": [
-						0,
-						-10
-					],
-					"scale": 1
+					"active": true
 				}
 			},
 			{
@@ -80,6 +74,7 @@
 		"demo_box2d.player",
 		"demo_box2d.smallCrate",
 		"demo_box2d.voiceSample",
+		"demo_physics.physics",
 		"spell.OpenSans14px",
 		"spell.component.2d.graphics.animatedAppearance",
 		"spell.component.2d.graphics.appearance",

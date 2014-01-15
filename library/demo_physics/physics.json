@@ -1,0 +1,14 @@
+{
+	"version": 1,
+	"type": "system",
+	"dependencies": [],
+	"input": [],
+	"config": [
+		{
+			"name": "active",
+			"type": "boolean",
+			"default": true,
+			"doc": "if active is false the system will be skipped during processing"
+		}
+	]
+}
