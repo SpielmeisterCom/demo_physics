@@ -2,10 +2,84 @@
 	"version": 1,
 	"config": {
 		"android": {
-			"signingKeyStore": "",
-			"signingKeyStorePass": "",
-			"signingKeyAlias": "",
-			"signingKeyPass": ""
+			"package": "",
+			"title": "",
+			"signing": {
+				"releaseKeyStorePassword": "",
+				"releaseKeyAlias": "",
+				"releaseKeyPassword": ""
+			}
+		},
+		"ios": {
+			"bundleId": "",
+			"appleId": "",
+			"releaseProvisioningProfile": "",
+			"releasePrivateKeyFile": "",
+			"debugProvisioningProfile": "",
+			"debugPrivateKeyFile": ""
+		},
+		"tizen": {
+			"identifier": "",
+			"name": "",
+			"appId": "",
+			"signing": {
+				"developerKeyfilePassword": "",
+				"distributor1KeyfilePassword": "",
+				"distributor2KeyfilePassword": ""
+			}
+		},
+		"web": {
+			"html5": true
+		},
+		"winstore": {
+			"packageDisplayName": "",
+			"displayName": "",
+			"publisher": "",
+			"publisherDisplayName": "",
+			"foregroundText": "dark",
+			"backgroundColor": "000000",
+			"description": "",
+			"signing": {
+				"certificatePassword": ""
+			}
+		},
+		"winphone": {
+			"displayName": "",
+			"publisher": "",
+			"author": "",
+			"description": ""
+		},
+		"plugins": {
+			"admob": {
+				"active": false,
+				"androidAdMobPublisherId": {
+					"debug": "",
+					"release": ""
+				},
+				"iPadAdMobPublisherId": {
+					"debug": "",
+					"release": ""
+				},
+				"iPhoneAdMobPublisherId": {
+					"debug": "",
+					"release": ""
+				}
+			},
+			"admobWithChartboost": {
+				"active": false,
+				"androidAdMobPublisherId": {
+					"debug": "",
+					"release": ""
+				},
+				"iPadAdMobPublisherId": {
+					"debug": "",
+					"release": ""
+				},
+				"iPhoneAdMobPublisherIdDebug": {
+					"debug": "",
+					"release": ""
+				}
+			}
 		},
 		"screenSize": [
 			600,
@@ -13,7 +87,9 @@
 		],
 		"loadingScene": "",
 		"screenMode": "fit",
+		"orientation": "",
 		"projectId": "demo_box2d",
+		"version": "",
 		"quadTreeSize": 1048576,
 		"defaultLanguage": "en",
 		"supportedLanguages": [
@@ -23,7 +99,7 @@
 	},
 	"startScene": "demo_box2d.scene.Scene1",
 	"type": "project",
-	"apiVersion": "0.8.47",
+	"apiVersion": "0.9.5",
 	"scenes": [
 		"demo_box2d.scene.Scene1"
 	]
