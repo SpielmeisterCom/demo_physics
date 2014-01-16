@@ -105,7 +105,7 @@ define(
             for( var i = 0; i < length; i++ ) {
                 var body = rigidBodies[i]
 
-                if( body.isStatic() ) {
+                if( body.isStatic() || body.sleeping ) {
                     continue
                 }
 
