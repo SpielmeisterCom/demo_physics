@@ -23,7 +23,7 @@ define(
 
 
         //TODO: check if the boxtree can be removed, instead use our quadtree http://docs.turbulenz.com/jslibrary_api/broadphase_api.html#broadphase
-        var Physice = PlatformKit.Physics
+        var Physics = PlatformKit.Physics
 		
 		/**
 		 * Creates an instance of the system.
@@ -52,38 +52,33 @@ define(
                 return
             }
 
-            //TODO: need a component definition
-            var material = Physice.createMaterial({
-                elasticity : 0.9,
-                staticFriction : 6,
-                dynamicFriction : 4,
-                rollingFriction : 0.001
-            })
-
-            //TODO: should move to physics context
-            if( boxShape ) {
-                var shape = Physice.createPolygonShape({
-                    vertices : Physice.createBoxVertices(
-                        boxShape.dimensions[ 0 ],
-                        boxShape.dimensions[ 1 ]
-                    ),
-                    material : material
-                })
-
-            } else if( circleShape ) {
-                var shape = Physice.createCircleShape({
-                    radius: circleShape.radius,
-                    material: material
-                })
-
-            } else if( convexPolygonShape ) {
-                var shape = Physice.createPolygonShape({
-                    vertices : [ convexPolygonShape.vertices ],
-                    material : material
-                })
+            var shapeDef = {
+                material : Physics.createMaterial({
+//                elasticity : 0,
+//                staticFriction : 6,
+                    dynamicFriction : fixture.friction,
+//                rollingFriction : 0.001,
+                    density: fixture.density
+                }),
+                group: fixture.categoryBits,
+                mask: fixture.maskBits,
+                sensor: fixture.isSensor
             }
 
-            world.createBodyDef(  entityId, body, [ shape.clone() ], transform )
+            if( circleShape ) {
+                shapeDef.radius = circleShape.radius
+                var shape = Physics.createCircleShape( shapeDef )
+
+            } else {
+                shapeDef.vertices = boxShape ? Physics.createBoxVertices(
+                                        boxShape.dimensions[ 0 ],
+                                        boxShape.dimensions[ 1 ]
+                                    ): [ convexPolygonShape.vertices ]
+
+                var shape = Physics.createPolygonShape( shapeDef )
+            }
+
+            world.createBodyDef( entityId, body, [ shape ], transform )
         }
 
 
