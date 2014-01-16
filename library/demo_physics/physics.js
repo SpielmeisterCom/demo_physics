@@ -23,8 +23,7 @@ define(
 
 
         //TODO: check if the boxtree can be removed, instead use our quadtree http://docs.turbulenz.com/jslibrary_api/broadphase_api.html#broadphase
-        var Physics2DDevice = PlatformKit.Physics,
-            phys2D          = Physics2DDevice.create()
+        var Physice = PlatformKit.Physics
 		
 		/**
 		 * Creates an instance of the system.
@@ -53,18 +52,18 @@ define(
                 return
             }
 
-            var translation = transform.translation
-
-            var material = phys2D.createMaterial({
+            //TODO: need a component definition
+            var material = Physice.createMaterial({
                 elasticity : 0.9,
                 staticFriction : 6,
                 dynamicFriction : 4,
                 rollingFriction : 0.001
             })
 
+            //TODO: should move to physics context
             if( boxShape ) {
-                var shape = phys2D.createPolygonShape({
-                    vertices : phys2D.createBoxVertices(
+                var shape = Physice.createPolygonShape({
+                    vertices : Physice.createBoxVertices(
                         boxShape.dimensions[ 0 ],
                         boxShape.dimensions[ 1 ]
                     ),
@@ -72,31 +71,26 @@ define(
                 })
 
             } else if( circleShape ) {
-                var shape = phys2D.createCircleShape({
+                var shape = Physice.createCircleShape({
                     radius: circleShape.radius,
                     material: material
                 })
 
             } else if( convexPolygonShape ) {
-                var shape = phys2D.createPolygonShape({
+                var shape = Physice.createPolygonShape({
                     vertices : [ convexPolygonShape.vertices ],
                     material : material
                 })
             }
 
-            var physicsBody = phys2D.createRigidBody({
-                type: body.type,
-                velocity: body.velocity,
-                shapes : [ shape.clone() ],
-                position: [
-                    translation[ 0 ],
-                    translation[ 1 ]
-                ],
-                rotation: transform.rotation,
-                userData: entityId
-            })
+            world.createBodyDef(  entityId, body, [ shape.clone() ], transform )
+        }
 
-            world.addRigidBody( physicsBody )
+
+        var destroyBodies = function( world, entityIds ) {
+            for( var i = 0, numEntityIds = entityIds.length; i < numEntityIds; i++ ) {
+                world.destroyBody( entityIds[ i ] )
+            }
         }
 
         var incrementState = function( entityManager, rigidBodies, bodies, transforms ) {
@@ -125,7 +119,7 @@ define(
                 entityManager.updateWorldTransform( id )
             }
         }
-		
+
 		physics.prototype = {
 			/**
 		 	 * Gets called when the system is created.
@@ -133,9 +127,14 @@ define(
 		 	 * @param {Object} [spell] The spell object.
 			 */
 			init: function( spell ) {
-                this.world = phys2D.createWorld( {
-                    gravity : this.config.gravity
-                });
+                this.world = spell.physicsWorlds.main
+
+                if( !this.world ) {
+                    var world = spell.physicsContext.createWorld( this.config.gravity, this.config.scale )
+
+                    this.world = world
+                    spell.physicsWorlds.main = world
+                }
 
                 this.entityCreatedHandler = _.bind( createBody, null, spell, this.world )
                 this.entityDestroyHandler = _.bind( this.removedEntitiesQueue.push, this.removedEntitiesQueue )
@@ -182,12 +181,17 @@ define(
 			 */
 			process: function( spell, timeInMs, deltaTimeInMs ) {
                 var world                = this.world,
-                    transforms           = this.transforms
+                    transforms           = this.transforms,
+                    removedEntitiesQueue = this.removedEntitiesQueue
 
-                world.step( deltaTimeInMs / 1000 )
+                if( removedEntitiesQueue.length ) {
+                    destroyBodies( world, removedEntitiesQueue )
+                    removedEntitiesQueue.length = 0
+                }
 
-                incrementState( spell.entityManager, world.rigidBodies, this.bodies, transforms )
-                //TODO: clear all removed entites from the physik world
+                world.step( deltaTimeInMs )
+
+                incrementState( spell.entityManager, world.getAllBodies(), this.bodies, transforms )
 			}
 		}
 		

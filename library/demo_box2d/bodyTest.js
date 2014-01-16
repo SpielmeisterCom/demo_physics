@@ -122,7 +122,7 @@ define(
 					var id = spell.entityManager.getEntityIdsByName( 'player' )[ 0 ]
 
 					if( id ) {
-						spell.box2dWorlds.main.applyForce( id, [ 0, 2500 ] )
+						spell.physicsWorlds.main.applyImpulse( id, [ 0, 1 ] )
 					}
 				}
 			}
