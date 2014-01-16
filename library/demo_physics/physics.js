@@ -72,11 +72,9 @@ define(
                 })
 
             } else if( circleShape ) {
-                var shape = phys2D.createPolygonShape({
-                    vertices : phys2D.createCircleShape(
-                        circleShape.radius
-                    ),
-                    material : material
+                var shape = phys2D.createCircleShape({
+                    radius: circleShape.radius,
+                    material: material
                 })
 
             } else if( convexPolygonShape ) {
