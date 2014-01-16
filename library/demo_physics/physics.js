@@ -100,14 +100,12 @@ define(
         }
 
         var incrementState = function( entityManager, rigidBodies, bodies, transforms ) {
-            var length = rigidBodies.length,
-                i      = 0
+            var length = rigidBodies.length
 
-            for( i = 0; i < length; i++ ) {
+            for( var i = 0; i < length; i++ ) {
                 var body = rigidBodies[i]
 
                 if( body.isStatic() ) {
-
                     continue
                 }
 
