@@ -38,13 +38,52 @@ define(
             this.removedEntitiesQueue = []
 		}
 
-        var createBody = function( spell, world, entityId, entity ) {
+        var triggerContactEntityEvent = function( entityManager, eventId, entityIdA, shape, params ) {
+            var entityIdB = shape.body.userData
+
+            entityManager.triggerEvent( entityIdA, eventId, [ entityIdB ].concat( params ) )
+            //TODO: check if we need to generate events for the other entity also
+//            entityManager.triggerEvent( entityIdB, eventId, [ entityIdA ].join( params ) )
+        }
+
+        var createContactListener = function( entityManager, entityId, shape, contactTrigger ) {
+            shape.addEventListener(
+                'begin', function( arbiter, otherShape ) {
+                    triggerContactEntityEvent( entityManager, 'onBeginContact', entityId, otherShape )
+
+                    if( contactTrigger ) {
+                        triggerContactEntityEvent( entityManager, contactTrigger.eventId, entityId, otherShape, contactTrigger.parameters.split(',') )
+                    }
+                }
+            )
+
+            shape.addEventListener(
+                'end', function( arbiter, otherShape ) {
+                    triggerContactEntityEvent( entityManager, 'onEndContact', entityId, otherShape )
+                }
+            )
+
+            shape.addEventListener(
+                'preSolve', function( arbiter, otherShape ) {
+                    triggerContactEntityEvent( entityManager, 'preSolve', entityId, otherShape, [ arbiter ] )
+                }
+            )
+
+            shape.addEventListener(
+                'progress', function( arbiter, otherShape ) {
+                    triggerContactEntityEvent( entityManager, 'progress', entityId, otherShape )
+                }
+            )
+        }
+
+        var createBody = function( entityManager, world, entityId, entity ) {
             var body               = entity[ Defines.PHYSICS_BODY_COMPONENT_ID ],
                 fixture            = entity[ Defines.PHYSICS_FIXTURE_COMPONENT_ID ],
                 boxShape           = entity[ Defines.PHYSICS_BOX_SHAPE_COMPONENT_ID ],
                 circleShape        = entity[ Defines.PHYSICS_CIRCLE_SHAPE_COMPONENT_ID ],
                 convexPolygonShape = entity[ Defines.PHYSICS_CONVEX_POLYGON_SHAPE_COMPONENT_ID ],
-                transform          = entity[ Defines.TRANSFORM_COMPONENT_ID ]
+                transform          = entity[ Defines.TRANSFORM_COMPONENT_ID ],
+                contactTrigger     = entity[ Defines.PHYSICS_CONTACT_TRIGGER_COMPONENT_ID ]
 
             if( !body || !fixture || !transform ||
                 ( !boxShape && !circleShape && !convexPolygonShape ) ) {
@@ -77,6 +116,8 @@ define(
 
                 var shape = Physics.createPolygonShape( shapeDef )
             }
+
+            createContactListener( entityManager, entityId, shape, contactTrigger )
 
             world.createBodyDef( entityId, body, [ shape ], transform )
         }
@@ -131,7 +172,7 @@ define(
                     spell.physicsWorlds.main = world
                 }
 
-                this.entityCreatedHandler = _.bind( createBody, null, spell, this.world )
+                this.entityCreatedHandler = _.bind( createBody, null, spell.entityManager, this.world )
                 this.entityDestroyHandler = _.bind( this.removedEntitiesQueue.push, this.removedEntitiesQueue )
 
                 var eventManager = spell.eventManager
@@ -146,7 +187,10 @@ define(
 		 	 * @param {Object} [spell] The spell object.
 			 */
 			destroy: function( spell ) {
-				
+                var eventManager = spell.eventManager
+
+                eventManager.unsubscribe( eventManager.EVENT.ENTITY_CREATED, this.entityCreatedHandler )
+                eventManager.unsubscribe( eventManager.EVENT.ENTITY_REMOVED, this.entityDestroyHandler )
 			},
 		
 			/**

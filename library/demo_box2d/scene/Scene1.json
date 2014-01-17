@@ -12,7 +12,12 @@
 			{
 				"id": "demo_physics.physics",
 				"config": {
-					"active": true
+					"active": true,
+					"gravity": [
+						0,
+						-10
+					],
+					"scale": 1
 				}
 			},
 			{
@@ -74,6 +79,7 @@
 		"demo_box2d.player",
 		"demo_box2d.smallCrate",
 		"demo_box2d.voiceSample",
+		"demo_physics.moonEventHandler",
 		"demo_physics.physics",
 		"spell.OpenSans14px",
 		"spell.component.2d.graphics.animatedAppearance",
@@ -234,6 +240,13 @@
 				"spell.component.visualObject": {},
 				"spell.component.2d.graphics.appearance": {
 					"assetId": "appearance:demo_box2d.moon"
+				},
+				"spell.component.physics.contactTrigger": {
+					"eventId": "moonHit",
+					"parameters": "one,two,three"
+				},
+				"spell.component.eventHandlers": {
+					"assetId": "script:demo_physics.moonEventHandler"
 				}
 			}
 		},
