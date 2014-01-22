@@ -2,7 +2,6 @@ define(
 	'spell/system/processPointerInput',
 	[
 		'spell/Defines',
-		'spell/Events',
 		'spell/client/util/createEffectiveCameraDimensions',
 		'spell/math/util',
 		'spell/math/vec2',
@@ -11,7 +10,6 @@ define(
 	],
 	function(
 		Defines,
-		Events,
 		createEffectiveCameraDimensions,
 		mathUtil,
 		vec2,
@@ -21,7 +19,8 @@ define(
 		'use strict'
 
 
-		var currentCameraId
+		var currentCameraId,
+			lastClickedEntityId
 
 		var isPointWithinEntity = function ( entityDimensions, transform, worldPosition ) {
 			return mathUtil.isPointInRect(
@@ -40,11 +39,31 @@ define(
 			]
 		}
 
+		var clickHandlerImpl = function( entityManager, screenSize, cameras, pointedEntityMap, renderingContext, eventHandlers, transforms, visualObjects, clickEvent ) {
+			var	camera                    = cameras[ currentCameraId ],
+				cameraTransform           = transforms[ currentCameraId ],
+				aspectRatio               = screenSize[ 0 ] / screenSize[ 1 ],
+				effectiveCameraDimensions = createEffectiveCameraDimensions( camera.width, camera.height, cameraTransform.scale, aspectRatio )
+
+			processEvent(
+				entityManager,
+				screenSize,
+				effectiveCameraDimensions,
+				pointedEntityMap,
+				renderingContext,
+				eventHandlers,
+				transforms,
+				visualObjects,
+				clickEvent
+			)
+		}
+
 		var processEvent = function( entityManager, screenSize, effectiveCameraDimensions, pointedEntityMap, renderingContext, eventHandlers, transforms, visualObjects, inputEvent ) {
 			if( inputEvent.type !== 'pointerDown' &&
 				inputEvent.type !== 'pointerMove' &&
 				inputEvent.type !== 'pointerUp' &&
-				inputEvent.type !== 'pointerCancel' ) {
+				inputEvent.type !== 'pointerCancel' &&
+				inputEvent.type !== 'click' ) {
 
 				return
 			}
@@ -81,7 +100,9 @@ define(
                     continue
                 }
 
+				// NOTE: I guess the visualObject component should contain the effective dimension information.
 				var entityDimensions = entityManager.getEntityDimensions( entityId )
+				if( !entityDimensions ) continue
 
 				var isEntityHit = isPointWithinEntity(
 					entityDimensions,
@@ -97,21 +118,27 @@ define(
                     }
 
                     if( inputEvent.type === 'pointerUp' ) {
+						lastClickedEntityId = undefined
                         pointedEntityMap[ entityId ] = false
                         entityManager.triggerEvent( entityId, 'pointerUp' )
 
                         // TODO: only fire pointerOut for devices that don't support hover status
                         entityManager.triggerEvent( entityId, 'pointerOut' )
 
-
                     } else if( inputEvent.type === 'pointerDown' ) {
+						lastClickedEntityId = entityId
                         pointedEntityMap[ entityId ] = inputEvent.pointerId
                         entityManager.triggerEvent( entityId, 'pointerDown' )
 
 					} else if( inputEvent.type === 'pointerMove' ) {
                         pointedEntityMap[ entityId ] = inputEvent.pointerId
                         entityManager.triggerEvent( entityId, 'pointerMove' )
-					}
+
+					} else if( inputEvent.type === 'click' &&
+						( !lastClickedEntityId || entityId === lastClickedEntityId ) ) {
+
+	                    entityManager.triggerEvent( entityId, 'click' )
+                    }
 
 				} else if( pointedEntityMap[ entityId ] === inputEvent.pointerId ) {
 					// pointer moved out of the entity
@@ -121,6 +148,7 @@ define(
 			}
 		}
 
+		var clickHandler
 
 		/**
 		 * Creates an instance of the system.
@@ -157,8 +185,8 @@ define(
 					this
 				)
 
-				eventManager.subscribe( [ Events.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-				eventManager.subscribe( [ Events.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+				eventManager.subscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+				eventManager.subscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
 
 
 				this.screenResizeHandler = _.bind(
@@ -168,7 +196,22 @@ define(
 					this
 				)
 
-				eventManager.subscribe( Events.SCREEN_RESIZE, this.screenResizeHandler )
+				eventManager.subscribe( eventManager.EVENT.SCREEN_RESIZE, this.screenResizeHandler )
+
+				clickHandler = _.bind(
+					clickHandlerImpl,
+					this,
+					spell.entityManager,
+					this.screenSize,
+					this.cameras,
+					this.pointedEntityMap,
+					spell.renderingContext,
+					this.eventHandlers,
+					this.transforms,
+					this.visualObjects
+				)
+
+				spell.inputManager.addListener( 'click', clickHandler )
 			},
 
 			/**
@@ -179,9 +222,11 @@ define(
 			destroy: function( spell ) {
 				var eventManager = spell.eventManager
 
-				eventManager.unsubscribe( [ Events.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-				eventManager.unsubscribe( [ Events.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-				eventManager.unsubscribe( Events.SCREEN_RESIZE, this.screenResizeHandler )
+				eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+				eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+				eventManager.unsubscribe( eventManager.EVENT.SCREEN_RESIZE, this.screenResizeHandler )
+
+				spell.inputManager.removeListener('click', clickHandler )
 			},
 
 			/**

@@ -12,7 +12,6 @@ define(
 		'spell/client/util/createEffectiveCameraDimensions',
 		'spell/client/util/createIncludedRectangle',
 		'spell/Defines',
-		'spell/Events',
 		'spell/shared/util/translate',
 		'spell/shared/util/platform/PlatformKit',
 
@@ -35,7 +34,6 @@ define(
 		createEffectiveCameraDimensions,
 		createIncludedRectangle,
 		Defines,
-		Events,
 		translate,
 		PlatformKit,
 
@@ -63,8 +61,8 @@ define(
 //		var statisticsManager,
 //			performance = window.performance
 
-		var translateTextAppearance = function( libraryManager, currentLanguage, textAppearance ) {
-			var text = translate( libraryManager, currentLanguage, textAppearance.translationAssetId, textAppearance.text )
+		var translateTextAppearance = function( assetManager, currentLanguage, textAppearance ) {
+			var text = translate( assetManager, currentLanguage, textAppearance.translationAssetId, textAppearance.text )
 			if( !text ) return
 
 			textAppearance.renderText = text
@@ -154,12 +152,6 @@ define(
 			return animationLengthInMs === 0 ?
 				0 :
 				offsetInMs / animationLengthInMs
-		}
-
-		var updatePlaying = function( animationLengthInMs, offsetInMs, looped ) {
-			return looped ?
-				true :
-				offsetInMs < animationLengthInMs
 		}
 
 		var transformTo2dTileMapCoordinates = function( worldToLocalMatrix, tilemapDimensions, frameDimensions, maxTileMapY, point ) {
@@ -259,7 +251,6 @@ define(
 			textAppearances,
 			tilemaps,
 			spriteSheetAppearances,
-			childrenComponents,
 			quadGeometries,
 			visualObjects,
 			rectangles,
@@ -286,9 +277,10 @@ define(
 						context.setGlobalAlpha( worldOpacity )
 					}
 
-					if( appearance ) {
-						var asset   = appearance.asset,
-							texture = asset.resource
+					var asset = appearance ? appearance.asset : undefined
+
+					if( asset ) {
+						var texture = asset.resource
 
 						if( !texture ) throw 'The resource id \'' + asset.resourceId + '\' could not be resolved.'
 
@@ -301,18 +293,14 @@ define(
 //							var start = performance.now()
 
 							// static appearance
-							context.save()
-							{
-								context.drawTexture(
-									texture,
-									vec2.scale( tmpVec2, quadDimensions, -0.5 ),
-									quadDimensions,
-									textureMatrix && !textureMatrix.isIdentity ?
-										textureMatrix.matrix :
-										undefined
-								)
-							}
-							context.restore()
+							context.drawTexture(
+								texture,
+								vec2.scale( tmpVec2, quadDimensions, -0.5 ),
+								quadDimensions,
+								textureMatrix && !textureMatrix.isIdentity ?
+									textureMatrix.matrix :
+									undefined
+							)
 
 //							var elapsed = performance.now() - start
 
@@ -350,59 +338,57 @@ define(
 							// animated appearance
 							var assetFrameDimensions = asset.frameDimensions,
 								assetNumFrames       = asset.numFrames,
-								assetFrameDuration   = asset.frameDuration,
-								animationLengthInMs  = assetNumFrames * assetFrameDuration
+								wasPlaying           = appearance.playing
 
 							var quadDimensions = quadGeometry ?
 								quadGeometry.dimensions :
 								assetFrameDimensions
 
-							if( appearance.playing === true && appearance.offset == 0 ) {
-								entityManager.triggerEvent( id, 'animationStart', [ 'animation', appearance ] )
-							}
+							if( wasPlaying ) {
+								if( appearance.offset == 0 ) {
+									entityManager.triggerEvent( id, 'animationStart', [ 'animation', appearance ] )
+								}
 
-							appearance.offset = createOffset(
-								deltaTimeInMs,
-								appearance.offset,
-								appearance.replaySpeed,
-								assetNumFrames,
-								asset.frameDuration,
-								appearance.looped
-							)
+								appearance.offset = createOffset(
+									deltaTimeInMs,
+									appearance.offset,
+									appearance.replaySpeed,
+									assetNumFrames,
+									asset.frameDuration,
+									appearance.looped
+								)
+							}
 
 							var frameId     = Math.round( appearance.offset * ( assetNumFrames - 1 ) ),
 								frameOffset = asset.frameOffsets[ frameId ]
 
 //							var start = performance.now()
 
-							context.save()
-							{
-								context.drawSubTexture(
-									texture,
-									frameOffset,
-									assetFrameDimensions,
-									vec2.scale( tmpVec2, quadDimensions, -0.5 ),
-									quadDimensions
-								)
-							}
-							context.restore()
+							context.drawSubTexture(
+								texture,
+								frameOffset,
+								assetFrameDimensions,
+								vec2.scale( tmpVec2, quadDimensions, -0.5 ),
+								quadDimensions
+							)
 
 //							var elapsed = performance.now() - start
 
-							var isPlaying = updatePlaying( animationLengthInMs, appearance.offset * animationLengthInMs, appearance.looped )
+							var reachedEnd = appearance.offset >= 1,
+								isPlaying  = wasPlaying && ( appearance.looped || !reachedEnd )
 
-							if( isPlaying !== appearance.playing ) {
+							if( isPlaying != wasPlaying ) {
 								appearance.playing = isPlaying
 
-								if( isPlaying === false ) {
+								if( !isPlaying ) {
 									entityManager.triggerEvent( id, 'animationEnd', [ 'animation', appearance ] )
 								}
 							}
 
 						} else if( asset.type === 'spriteSheet' ) {
-							var frames            = appearance.drawAllFrames ? asset.frames : appearance.frames,
-								frameDimensions   = asset.frameDimensions,
+							var frameDimensions   = asset.frameDimensions,
 								frameOffsets      = asset.frameOffsets,
+								frames            = appearance.drawAllFrames ? _.keys( asset.frameOffsets ) : appearance.frames,
 								frameOffset       = undefined,
 								quadDimensions    = quadGeometry ? quadGeometry.dimensions :  [ ( frames.length -0 ) * frameDimensions[ 0 ], frameDimensions[ 1 ] ],
 								numFramesInQuad   = [
@@ -420,13 +406,7 @@ define(
 								{
 									context.scale( frameDimensions )
 
-									for(
-										var x = 0, length = frames.length;
-									     x < length &&
-										 x < totalFramesInQuad;
-									     x++
-										) {
-
+									for( var x = 0, length = frames.length; x < length && x < totalFramesInQuad; x++ ) {
 										frameId     = frames[ x ]
 										frameOffset = frameOffsets[ frameId ]
 
@@ -461,7 +441,7 @@ define(
 			context.restore()
 		}
 
-		var drawDebug = function( context, childrenComponents, debugBoxes, debugCircles, transforms, deltaTimeInMs, id ) {
+		var drawDebug = function( context, debugBoxes, debugCircles, transforms, deltaTimeInMs, id ) {
 			var debugBox    = debugBoxes[ id ],
 				debugCircle = debugCircles[ id ],
 				transform   = transforms[ id ]
@@ -537,7 +517,7 @@ define(
 				this
 			)
 
-			eventManager.subscribe( Events.SCREEN_RESIZE, this.screenResizeHandler )
+			eventManager.subscribe( eventManager.EVENT.SCREEN_RESIZE, this.screenResizeHandler )
 
 
 			this.cameraChangedHandler = _.bind(
@@ -547,19 +527,20 @@ define(
 				this
 			)
 
-			eventManager.subscribe( [ Events.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-			eventManager.subscribe( [ Events.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.subscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.subscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
 
 
 			// HACK: textAppearances should get translated when they are created or when the current language is changed
 			this.translateTextAppearanceHandler = _.bind(
 				translateTextAppearance,
 				null,
-				spell.libraryManager,
+				spell.assetManager,
 				spell.configurationManager.getValue( 'currentLanguage' )
 			)
 
-			eventManager.subscribe( [ Events.COMPONENT_CREATED, Defines.TEXT_APPEARANCE_COMPONENT_ID ], this.translateTextAppearanceHandler )
+			eventManager.subscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.TEXT_APPEARANCE_COMPONENT_ID ], this.translateTextAppearanceHandler )
+			eventManager.subscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.TEXT_APPEARANCE_COMPONENT_ID ], this.translateTextAppearanceHandler )
 
 
 //			statisticsManager = spell.statisticsManager
@@ -575,10 +556,11 @@ define(
 		var destroy = function( spell ) {
 			var eventManager = this.eventManager
 
-			eventManager.unsubscribe( Events.SCREEN_RESIZE, this.screenResizeHandler )
-			eventManager.unsubscribe( [ Events.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-			eventManager.unsubscribe( [ Events.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-			eventManager.unsubscribe( [ Events.COMPONENT_CREATED, Defines.TEXT_APPEARANCE_COMPONENT_ID ], this.translateTextAppearanceHandler )
+			eventManager.unsubscribe( eventManager.EVENT.SCREEN_RESIZE, this.screenResizeHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.TEXT_APPEARANCE_COMPONENT_ID ], this.translateTextAppearanceHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.TEXT_APPEARANCE_COMPONENT_ID ], this.translateTextAppearanceHandler )
 
 			this.context.clear()
 		}
@@ -594,7 +576,6 @@ define(
 				textAppearances        = this.textAppearances,
 				tilemaps               = this.tilemaps,
 				spriteSheetAppearances = this.spriteSheetAppearances,
-				childrenComponents     = this.childrenComponents,
 				quadGeometries         = this.quadGeometries,
 				visualObjects          = this.visualObjects,
 				rectangles             = this.rectangles,
@@ -634,7 +615,6 @@ define(
 					textAppearances,
 					tilemaps,
 					spriteSheetAppearances,
-					childrenComponents,
 					quadGeometries,
 					visualObjects,
 					rectangles,
@@ -663,7 +643,6 @@ define(
 						textAppearances,
 						tilemaps,
 						spriteSheetAppearances,
-						childrenComponents,
 						quadGeometries,
 						visualObjects,
 						rectangles,
@@ -680,7 +659,7 @@ define(
 						debugCircles = this.debugCircles
 
 					for( var i = 0, n = visibleEntityIdsSorted.length; i < n; i++ ) {
-						drawDebug( context, childrenComponents, debugBoxes, debugCircles, transforms, deltaTimeInMs, visibleEntityIdsSorted[ i ] )
+						drawDebug( context, debugBoxes, debugCircles, transforms, deltaTimeInMs, visibleEntityIdsSorted[ i ] )
 					}
 				}
 			}
@@ -703,7 +682,6 @@ define(
 					textAppearances,
 					tilemaps,
 					spriteSheetAppearances,
-					childrenComponents,
 					quadGeometries,
 					visualObjects,
 					rectangles,
@@ -712,6 +690,8 @@ define(
 					viewFrustum
 				)
 			}
+
+			context.flush()
 
 			setCamera( context, effectiveCameraDimensions, cameraTransform.translation )
 

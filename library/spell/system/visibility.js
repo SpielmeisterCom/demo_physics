@@ -3,7 +3,6 @@ define(
 	[
 		'spell/client/util/createEffectiveCameraDimensions',
 		'spell/Defines',
-		'spell/Events',
 		'spell/math/vec2',
 
 		'spell/functions'
@@ -11,7 +10,6 @@ define(
 	function(
 		createEffectiveCameraDimensions,
 		Defines,
-		Events,
 		vec2,
 
 		_
@@ -29,7 +27,7 @@ define(
 				this
 			)
 
-			eventManager.subscribe( Events.SCREEN_RESIZE, this.screenResizeHandler )
+			eventManager.subscribe( eventManager.EVENT.SCREEN_RESIZE, this.screenResizeHandler )
 
 
 			this.cameraChangedHandler = _.bind(
@@ -39,8 +37,8 @@ define(
 				this
 			)
 
-			eventManager.subscribe( [ Events.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-			eventManager.subscribe( [ Events.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.subscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.subscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
 
 
 			this.visualObjectCreatedHandler = _.bind(
@@ -53,14 +51,13 @@ define(
 						return
 					}
 
-					var childrenComponent = entity[ Defines.CHILDREN_COMPONENT_ID ],
-						parentComponent   = entity[ Defines.PARENT_COMPONENT_ID ]
+					var compositeComponent = entity[ Defines.COMPOSITE_COMPONENT_ID ]
 
 					var entityInfo = {
-						children : childrenComponent ? childrenComponent.ids : [],
+						children : compositeComponent.childrenIds,
 						layer : visualObject.layer,
 						id : entityId,
-						parent : parentComponent ? parentComponent.id : 0
+						parent : compositeComponent.parentId
 					}
 
 					if( visualObject.pass === 'ui' ) {
@@ -73,16 +70,16 @@ define(
 				this
 			)
 
-			eventManager.subscribe( [ Events.ENTITY_CREATED, Defines.VISUAL_OBJECT_COMPONENT_ID ], this.visualObjectCreatedHandler )
+			eventManager.subscribe( [ eventManager.EVENT.ENTITY_CREATED, Defines.VISUAL_OBJECT_COMPONENT_ID ], this.visualObjectCreatedHandler )
 		}
 
 		var destroy = function( spell ) {
 			var eventManager = this.eventManager
 
-			eventManager.unsubscribe( Events.SCREEN_RESIZE, this.screenResizeHandler )
-			eventManager.unsubscribe( [ Events.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-			eventManager.unsubscribe( [ Events.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
-			eventManager.unsubscribe( [ Events.ENTITY_CREATED, Defines.VISUAL_OBJECT_COMPONENT_ID ], this.visualObjectCreatedHandler )
+			eventManager.unsubscribe( eventManager.EVENT.SCREEN_RESIZE, this.screenResizeHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_CREATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.COMPONENT_UPDATED, Defines.CAMERA_COMPONENT_ID ], this.cameraChangedHandler )
+			eventManager.unsubscribe( [ eventManager.EVENT.ENTITY_CREATED, Defines.VISUAL_OBJECT_COMPONENT_ID ], this.visualObjectCreatedHandler )
 		}
 
 

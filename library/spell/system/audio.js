@@ -6,25 +6,23 @@
 define(
 	'spell/system/audio',
 	[
-		'spell/Defines',
-		'spell/Events'
+		'spell/Defines'
 	],
 	function(
-		Defines,
-		Events
+		Defines
 	) {
 		'use strict'
 
 
 		var playSound = function( entityManager, audioContext, id, soundEmitter ) {
 			if( soundEmitter.mute ||
-				audioContext.isAllMuted() ) {
+				audioContext.isContextMuted() ) {
 
 				audioContext.mute( id )
 			}
 
 			if( !soundEmitter.play ) {
-				audioContext.play( soundEmitter.asset.resource, id, soundEmitter.volume, soundEmitter.loop )
+				audioContext.play( soundEmitter.asset, soundEmitter.volume, soundEmitter.loop )
 
 				soundEmitter.play = true
 
@@ -34,7 +32,6 @@ define(
 			}
 		}
 
-
 		/**
 		 * Creates an instance of the system.
 		 *
@@ -43,6 +40,7 @@ define(
 		 */
 		var audio = function( spell ) {
 			this.soundEmitterUpdatedHandler = null
+			this.visibilityChangedHandler = null
 		}
 
 		audio.prototype = {
@@ -60,8 +58,30 @@ define(
 					playSound( entityManager, audioContext, id, soundEmitter )
 				}
 
-				eventManager.subscribe( [ Events.COMPONENT_CREATED, Defines.SOUND_EMITTER_COMPONENT_ID ], this.soundEmitterUpdatedHandler )
-				eventManager.subscribe( [ Events.COMPONENT_UPDATED, Defines.SOUND_EMITTER_COMPONENT_ID ], this.soundEmitterUpdatedHandler )
+				this.visibilityChangedHandler = function( isVisible ) {
+					if( isVisible ) {
+						audioContext.resumeContext()
+
+					} else {
+						audioContext.pauseContext()
+					}
+
+				}
+
+				eventManager.subscribe(
+					[ eventManager.EVENT.COMPONENT_CREATED, Defines.SOUND_EMITTER_COMPONENT_ID ],
+					this.soundEmitterUpdatedHandler
+				)
+
+				eventManager.subscribe(
+					[ eventManager.EVENT.COMPONENT_UPDATED, Defines.SOUND_EMITTER_COMPONENT_ID ],
+					this.soundEmitterUpdatedHandler
+				)
+
+				eventManager.subscribe(
+					eventManager.EVENT.VISIBILITY_CHANGED,
+					this.visibilityChangedHandler
+				)
 			},
 
 			/**
@@ -72,8 +92,20 @@ define(
 			destroy: function( spell ) {
 				var eventManager = spell.eventManager
 
-				eventManager.unsubscribe( [ Events.COMPONENT_CREATED, Defines.SOUND_EMITTER_COMPONENT_ID ], this.soundEmitterUpdatedHandler )
-				eventManager.unsubscribe( [ Events.COMPONENT_UPDATED, Defines.SOUND_EMITTER_COMPONENT_ID ], this.soundEmitterUpdatedHandler )
+				eventManager.unsubscribe(
+					[ eventManager.EVENT.COMPONENT_CREATED, Defines.SOUND_EMITTER_COMPONENT_ID ],
+					this.soundEmitterUpdatedHandler
+				)
+
+				eventManager.unsubscribe(
+					[ eventManager.EVENT.COMPONENT_UPDATED, Defines.SOUND_EMITTER_COMPONENT_ID ],
+					this.soundEmitterUpdatedHandler
+				)
+
+				eventManager.unsubscribe(
+					eventManager.EVENT.VISIBILITY_CHANGED,
+					this.visibilityChangedHandler
+				)
 			},
 
 			/**
