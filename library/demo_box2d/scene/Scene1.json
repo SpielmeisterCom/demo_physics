@@ -10,9 +10,10 @@
 				}
 			},
 			{
-				"id": "demo_physics.physics",
+				"id": "spell.system.physics",
 				"config": {
 					"active": true,
+					"debug": true,
 					"gravity": [
 						0,
 						-10
@@ -56,7 +57,7 @@
 				"id": "spell.system.render",
 				"config": {
 					"active": true,
-					"debug": false
+					"debug": true
 				}
 			},
 			{
@@ -80,7 +81,6 @@
 		"demo_box2d.smallCrate",
 		"demo_box2d.voiceSample",
 		"demo_physics.moonEventHandler",
-		"demo_physics.physics",
 		"spell.OpenSans14px",
 		"spell.component.2d.graphics.animatedAppearance",
 		"spell.component.2d.graphics.appearance",
@@ -169,8 +169,6 @@
 					"type": "dynamic"
 				},
 				"spell.component.physics.fixture": {
-					"friction": 1,
-					"restitution": 0.1,
 					"density": 65
 				},
 				"spell.component.physics.shape.box": {
@@ -225,7 +223,6 @@
 					"type": "dynamic"
 				},
 				"spell.component.physics.fixture": {
-					"restitution": 0.3,
 					"density": 2
 				},
 				"spell.component.physics.shape.circle": {
@@ -262,10 +259,7 @@
 				"spell.component.physics.body": {
 					"type": "dynamic"
 				},
-				"spell.component.physics.fixture": {
-					"friction": 0.9,
-					"restitution": 0.5
-				},
+				"spell.component.physics.fixture": {},
 				"spell.component.visualObject": {},
 				"spell.component.2d.graphics.animatedAppearance": {
 					"assetId": "animation:demo_box2d.glowingBoxAnimation"
@@ -282,6 +276,12 @@
 					"translation": [
 						9.946532249450684,
 						1.5820236206054688
+					]
+				},
+				"spell.component.physics.shape.box": {
+					"dimensions": [
+						1,
+						1
 					]
 				}
 			}

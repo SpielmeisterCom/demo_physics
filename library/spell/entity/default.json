@@ -1,7 +1,7 @@
 {
-    "type": "entityTemplate",
-    "config": {
-    },
-    "children": [],
-    "version": 1
+	"version": 1,
+	"type": "entityTemplate",
+	"dependencies": [],
+	"config": {},
+	"children": []
 }

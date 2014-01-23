@@ -239,12 +239,12 @@ define(
             }
 		}
 
-		var applyTorque = function( entityId, torque ) {
+		var setTorque = function( entityId, torque ) {
 			var body = this.getBodyById( entityId )
 			if( !body ) return
 
 			if( torque ) {
-				body.setForce( torque * this.scale )
+				body.setTorque( torque * this.scale )
 			}
 		}
 
@@ -314,18 +314,28 @@ define(
 				scale       = this.scale
 
             var physicsBody = Physics.createRigidBody({
-                type: body.type,
-                velocity: [
-                    body.velocity[ 0 ] * scale,
-                    body.velocity[ 1 ] * scale
-                ],
-                shapes : shapes,
-                position: [
-                    translation[ 0 ] * scale,
-                    translation[ 1 ] * scale
-                ],
-                rotation: transform.rotation,
-                userData: entityId
+                type            : body.type,
+                velocity        : [
+                                    body.velocity[ 0 ] * scale,
+                                    body.velocity[ 1 ] * scale
+                                ],
+                shapes          : shapes,
+                position        :[
+                                    translation[ 0 ] * scale,
+                                    translation[ 1 ] * scale
+                                ],
+                rotation        : transform.rotation,
+                mass            : body.mass > 0 ? body.mass : undefined,
+                inertia         : body.inertia > 0 ? body.inertia : undefined,
+                sleeping        : body.sleeping,
+                bullet          : body.bullet,
+                angularVelocity : body.angularVelocity,
+                force           : body.force,
+                torque          : body.torque,
+                linearDrag      : body.linearDrag,
+                angularDrag     : body.angularDrag,
+                surfaceVelocity : body.surfaceVelocity,
+                userData        : entityId
             })
 
             this.rawWorld.addRigidBody( physicsBody )
@@ -374,7 +384,7 @@ define(
             step          : step,
 			applyForce    : applyForce,
 			applyImpulse  : applyImpulse,
-			applyTorque   : applyTorque,
+            setTorque     : setTorque,
             createBodyDef : createBodyDef,
 			destroyBody   : destroyBody,
 			getBodyById   : getBodyById,
@@ -406,226 +416,6 @@ define(
 		return function() {
 			return {
 				createWorld : createPhysicsWorld
-			}
-		}
-	}
-)
-
-define(
-	'spell/shared/util/physics/createBox2dWorld',
-	[
-		'spell/shared/util/platform/PlatformKit',
-
-		'spell/functions'
-	],
-	function(
-		PlatformKit,
-
-		_
-	) {
-		'use strict'
-
-
-		var Box2D              = PlatformKit.Box2D,
-			createB2Vec2       = Box2D.Common.Math.createB2Vec2,
-			createB2World      = Box2D.Dynamics.createB2World,
-			b2Body             = Box2D.Dynamics.b2Body,
-			createB2BodyDef    = Box2D.Dynamics.createB2BodyDef,
-			createB2FilterData = Box2D.Dynamics.createB2FilterData,
-			idToBody           = {}
-
-		var getBodyById = function( entityId ) {
-			return idToBody[ entityId ]
-		}
-
-		var applyForce = function( entityId, force, point ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			var scale  = this.scale,
-				forceX = force[ 0 ] * scale,
-				forceY = force[ 1 ] * scale
-
-			if( forceX || forceY ) {
-				body.ApplyForce(
-					createB2Vec2( forceX, forceY ),
-					point ?
-						createB2Vec2( point[ 0 ] * scale, point[ 1 ] * scale ) :
-						body.GetWorldCenter()
-				)
-			}
-		}
-
-		var applyTorque = function( entityId, torque ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			if( torque ) {
-				body.ApplyTorque( torque * this.scale )
-			}
-		}
-
-		var applyImpulse = function( entityId, impulse, point ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			var scale    = this.scale,
-				impulseX = impulse[ 0 ] * scale,
-				impulseY = impulse[ 1 ] * scale
-
-			if( impulseX || impulseY ) {
-				body.ApplyImpulse(
-					createB2Vec2( impulseX, impulseY ),
-					point ?
-						createB2Vec2( point[ 0 ] * scale, point[ 1 ] * scale ) :
-						body.GetWorldCenter()
-				)
-			}
-		}
-
-		var setVelocity = function( entityId, velocity ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			var scale = this.scale
-
-			body.SetLinearVelocity(
-				createB2Vec2( velocity[ 0 ] * scale, velocity[ 1 ] * scale )
-			)
-		}
-
-		var setFilterData = function( entityId, categoryBits, maskBits ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			for( var fixture = body.GetFixtureList(); fixture; fixture = fixture.GetNext() ) {
-				var filterData    = fixture.GetFilterData(),
-					newFilterData = createB2FilterData()
-
-				newFilterData.categoryBits = categoryBits === undefined ?
-					filterData.categoryBits :
-					categoryBits
-
-				newFilterData.maskBits = maskBits === undefined ?
-					filterData.maskBits :
-					maskBits
-
-				fixture.SetFilterData( newFilterData )
-			}
-		}
-
-		var setAwake = function( entityId, state ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			body.SetAwake( state )
-		}
-
-		var setPosition = function( entityId, position ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			var scale = this.scale
-
-			body.SetPosition(
-				createB2Vec2( position[ 0 ] * scale, position[ 1 ] * scale )
-			)
-		}
-
-		var getBodyType = function( type ) {
-			return type === 'static' ? b2Body.b2_staticBody :
-				type === 'dynamic' ? b2Body.b2_dynamicBody :
-					type === 'kinematic' ? b2Body.b2_kinematicBody :
-						undefined
-		}
-
-		var isBodyTypeStatic = function( type ) {
-			return type === 'static'
-		}
-
-		var createBodyDef = function( entityId, body, transform ) {
-			var translation = transform.translation,
-				bodyDef     = createB2BodyDef(),
-				type        = getBodyType( body.type ),
-				scale       = this.scale
-
-			if( type === undefined ) return
-
-			bodyDef.awake         = !isBodyTypeStatic( body.type )
-			bodyDef.fixedRotation = body.fixedRotation
-			bodyDef.type          = type
-			bodyDef.position.x    = translation[ 0 ] * scale
-			bodyDef.position.y    = translation[ 1 ] * scale
-			bodyDef.angle         = transform.rotation
-			bodyDef.userData      = entityId
-
-			var body = this.rawWorld.CreateBody( bodyDef )
-
-			idToBody[ entityId ] = body
-
-			return body
-		}
-
-		var destroyBody = function( entityId ) {
-			var body = this.getBodyById( entityId )
-			if( !body ) return
-
-			delete idToBody[ entityId ]
-
-			this.rawWorld.DestroyBody( body )
-		}
-
-		var getRawWorld = function() {
-			return this.rawWorld
-		}
-
-		var Box2dWorld = function( doSleep, gravity, scale ) {
-			if( doSleep === undefined ) doSleep = true
-			if( !gravity ) gravity = [ 0, 0 ]
-			if( !scale ) scale = 1
-
-			this.rawWorld = createB2World(
-				createB2Vec2( gravity[ 0 ], gravity[ 1 ] ),
-				doSleep
-			)
-
-			this.scale = scale
-		}
-
-		Box2dWorld.prototype = {
-			applyForce    : applyForce,
-			applyImpulse  : applyImpulse,
-			applyTorque   : applyTorque,
-			createBodyDef : createBodyDef,
-			destroyBody   : destroyBody,
-			getBodyById   : getBodyById,
-			getRawWorld   : getRawWorld,
-			setAwake      : setAwake,
-			setFilterData : setFilterData,
-			setPosition   : setPosition,
-			setVelocity   : setVelocity
-		}
-
-		return function( doSleep, gravity, scale ) {
-			return new Box2dWorld( doSleep, gravity, scale )
-		}
-	}
-)
-
-define(
-	'spell/shared/util/physics/createBox2dContext',
-	[
-		'spell/shared/util/physics/createBox2dWorld'
-	],
-	function(
-		createBox2dWorld
-	) {
-		'use strict'
-
-
-		return function() {
-			return {
-				createWorld : createBox2dWorld
 			}
 		}
 	}
@@ -7769,7 +7559,7 @@ define(
 		'spell/shared/util/platform/private/flurry',
 		'spell/shared/util/platform/private/createComponentType',
 		'spell/shared/util/platform/private/environment/isHtml5Ejecta',
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/functions'
 	],
 	function(
@@ -7803,7 +7593,7 @@ define(
 		flurry,
 		createComponentType,
 		isHtml5Ejecta,
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		_
 	) {
 		'use strict'
@@ -7831,7 +7621,7 @@ define(
 			 */
 			Box2D : Box2D,
 
-            /*
+			/*
              *
              */
             Physics : new physics2dDevice(),
@@ -7947,7 +7737,7 @@ define(
 
 			getPlugins : function() {
 				if( isHtml5Ejecta ||
-					isHtml5GameClosure ) {
+					isHtml5TeaLeaf ) {
 
 					return {
 						admob : advertisement,
@@ -14257,7 +14047,6 @@ define(
 		'spell/PluginManager',
 		'spell/StatisticsManager',
 		'spell/Console',
-		'spell/shared/util/physics/createBox2dContext',
         'spell/shared/util/physics/createPhysicsContext',
 		'spell/shared/util/platform/PlatformKit',
 		'spell/shared/util/platform/initDebugEnvironment',
@@ -14284,7 +14073,6 @@ define(
 		PluginManager,
 		StatisticsManager,
 		Console,
-		createBox2dContext,
         createPhysicsContext,
 		PlatformKit,
 		initDebugEnvironment,
@@ -14306,8 +14094,7 @@ define(
 			var spell                = this.spell,
 				eventManager         = spell.eventManager,
 				configurationManager = spell.configurationManager,
-				isModeDeployed       = spell.loaderConfig.mode === 'deployed',
-				libraryManager       = new LibraryManager( eventManager, configurationManager.getValue( 'libraryUrl' ), isModeDeployed )
+				libraryManager       = spell.libraryManager
 
 			setApplicationModule(
                 spell,
@@ -14379,8 +14166,6 @@ define(
 			spell.configurationManager = configurationManager
 			spell.moduleLoader         = moduleLoader
 			spell.entityManager        = entityManager
-			spell.box2dContext         = createBox2dContext()
-			spell.box2dWorlds          = {}
             spell.physicsContext       = createPhysicsContext()
             spell.physicsWorlds        = {}
 			spell.renderingContext     = renderingContext
@@ -14431,6 +14216,7 @@ define(
 			spell.statisticsManager    = statisticsManager
 			spell.storage              = PlatformKit.createPersistentStorage()
 			spell.pluginManager        = new PluginManager()
+            spell.libraryManager       = new LibraryManager( eventManager, configurationManager.getValue( 'libraryUrl' ), isModeDeployed )
 
 			this.spell = spell
 
@@ -14778,7 +14564,7 @@ define(
 	[
 		'spell/shared/util/platform/private/input/support',
 		'spell/shared/util/platform/private/environment/isHtml5Ejecta',
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/environment/isHtml5Tizen',
 		'spell/shared/util/platform/private/environment/isHtml5WinPhone',
 		'spell/shared/util/platform/private/environment/isHtml5WinStore',
@@ -14787,7 +14573,7 @@ define(
 	function(
 		support,
 		isHtml5Ejecta,
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		isHtml5Tizen,
 		isHtml5WinPhone,
 		isHtml5WinStore,
@@ -14796,7 +14582,7 @@ define(
 		'use strict'
 
 
-		if( isHtml5GameClosure ) {
+		if( isHtml5TeaLeaf ) {
 			var gameClosureDeviceInfo = jsonCoder.decode( NATIVE.device.native_info )
 		}
 
@@ -14813,7 +14599,7 @@ define(
 				if( isHtml5Ejecta ) {
 					return 'iOS ' + navigator.userAgent.match( /([\.\d]+)\)$/ )[ 1 ]
 
-				} else if( isHtml5GameClosure ) {
+				} else if( isHtml5TeaLeaf ) {
 					return 'Android ' + gameClosureDeviceInfo.versionRelease
 
 				} else {
@@ -14822,7 +14608,7 @@ define(
 			},
 			getPlatformAdapter : function() {
 				if( isHtml5Ejecta ) return 'ejecta'
-				if( isHtml5GameClosure ) return 'gameclosure'
+				if( isHtml5TeaLeaf ) return 'gameclosure'
 
 				return 'html5'
 			},
@@ -14831,7 +14617,7 @@ define(
 			},
 			getTarget : function() {
 				if( isHtml5Ejecta ) return 'ios'
-				if( isHtml5GameClosure ) return 'android'
+				if( isHtml5TeaLeaf ) return 'android'
 				if( isHtml5Tizen ) return 'tizen'
 				if( isHtml5WinPhone ) return 'winphone'
 				if( isHtml5WinStore ) return 'winstore'
@@ -14840,7 +14626,7 @@ define(
 			},
 			getDevice : function() {
 				if( isHtml5Ejecta ) return navigator.userAgent.match( /\((.*);/ )[ 1 ]
-				if( isHtml5GameClosure ) return gameClosureDeviceInfo.model + ', ' + gameClosureDeviceInfo.manufacturer
+				if( isHtml5TeaLeaf ) return gameClosureDeviceInfo.model + ', ' + gameClosureDeviceInfo.manufacturer
 
 				return 'unknown'
 			},
@@ -14851,7 +14637,7 @@ define(
 				return screen.width
 			},
 			isMobileDevice: function() {
-				return isHtml5Ejecta || isHtml5GameClosure
+				return isHtml5Ejecta || isHtml5TeaLeaf
 			}
 		}
 	}
@@ -28150,14 +27936,14 @@ define(
 		'spell/functions',
 		'spell/shared/util/platform/private/input/deviceOrientationHandler',
 		'spell/shared/util/platform/private/environment/isHtml5Ejecta',
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/registerTimer'
 	],
 	function(
 		_,
 		deviceOrientationHandler,
 		isHtml5Ejecta,
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		registerTimer
 	) {
 		'use strict'
@@ -28184,14 +27970,14 @@ define(
 					isHtml5Ejecta
 			},
 			hasDeviceOrientationApi : function() {
-				return isHtml5GameClosure ||
+				return isHtml5TeaLeaf ||
 					( window.DeviceMotionEvent !== undefined && !isBrokenDeviceOrientationApi )
 			},
 			hasNativeClickEvent : function() {
-				return !( isHtml5Ejecta || isHtml5GameClosure )
+				return !( isHtml5Ejecta || isHtml5TeaLeaf )
 			},
 			init : function( spell, next ) {
-				if( !isHtml5GameClosure && window.DeviceMotionEvent ) {
+				if( !isHtml5TeaLeaf && window.DeviceMotionEvent ) {
 					var doneProbing = _.once( function() {
 						deviceOrientationHandler.removeListener( window )
 
@@ -28301,12 +28087,13 @@ define(
 	'spell/shared/util/platform/private/input/pointerHandler',
 	[
 		'spell/shared/util/platform/private/input/support',
+		'spell/shared/util/platform/private/environment/isHtml5Ejecta',
 
 		'spell/functions'
 	],
 	function(
 		supportedInputApi,
-
+		isHtml5Ejecta,
 		_
 	) {
 		'use strict'
@@ -28358,7 +28145,7 @@ define(
 		}
 
 		function getOffset( element ) {
-			if( !element.getBoundingClientRect ) {
+			if( isHtml5Ejecta || !element.getBoundingClientRect ) {
 				return [ 0, 0 ]
 			}
 
@@ -28645,14 +28432,14 @@ define(
 define(
 	'spell/shared/util/platform/private/input/keyHandler',
 	[
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/environment/isHtml5Tizen',
 		'spell/shared/util/platform/private/environment/isHtml5WinPhone',
 		'spell/shared/util/input/keyCodes',
 		'spell/functions'
 	],
 	function(
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		isHtml5Tizen,
 		isHtml5WinPhone,
 		keyCodes,
@@ -28701,7 +28488,7 @@ define(
 				return
 			}
 
-			if( isHtml5GameClosure ) {
+			if( isHtml5TeaLeaf ) {
 				NATIVE.events.registerHandler(
 					'keyEvent',
 					function( event ) {
@@ -28798,12 +28585,12 @@ define(
 	'spell/shared/util/platform/private/input/deviceOrientationHandler',
 	[
 		'spell/functions',
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/environment/isHtml5Tizen'
 	],
 	function(
 		_,
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		isHtml5Tizen
 	) {
 		'use strict'
@@ -28828,7 +28615,7 @@ define(
 
 		return {
 			registerListener : function( el, callback ) {
-				if( isHtml5GameClosure ) {
+				if( isHtml5TeaLeaf ) {
 					nativeHandler = function( event ) {
 						callback( new DeviceOrientationEvent(
 							event.alpha * TO_DEGREE_FACTOR,
@@ -28855,7 +28642,7 @@ define(
 			removeListener : function( el ) {
 				if( !nativeHandler ) return
 
-				if( isHtml5GameClosure ) {
+				if( isHtml5TeaLeaf ) {
 					NATIVE.events.unregisterHandler( 'deviceorientation', nativeHandler )
 
 				} else {
@@ -29069,11 +28856,11 @@ define(
 define(
 	'spell/shared/util/platform/private/graphics/createSplashScreenImage',
 	[
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/data/algorithm/RLE'
 	],
 	function(
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		RLE
 	) {
 		'use strict'
@@ -29094,7 +28881,7 @@ define(
 		}
 
 		return function() {
-			if( isHtml5GameClosure ) {
+			if( isHtml5TeaLeaf ) {
 				return
 			}
 
@@ -29122,13 +28909,13 @@ define(
 define(
 	'spell/shared/util/platform/private/getAvailableScreenSize',
     [
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
         'spell/shared/util/platform/private/environment/isHtml5Ejecta',
 	    'spell/shared/util/platform/private/environment/isHtml5Tizen',
 		'spell/shared/util/platform/private/environment/isHtml5WinPhone'
     ],
 	function(
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
         isHtml5Ejecta,
 	    isHtml5Tizen,
 		isHtml5WinPhone
@@ -29165,7 +28952,7 @@ define(
 		}
 
 		return function( id ) {
-            if( isHtml5GameClosure ||
+            if( isHtml5TeaLeaf ||
 				isHtml5Ejecta ||
 	            isHtml5Tizen ||
 				isHtml5WinPhone ) {
@@ -29186,11 +28973,11 @@ define(
 	'spell/shared/util/platform/private/flurry',
 	[
 		'spell/shared/util/platform/private/environment/isHtml5Ejecta',
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure'
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf'
 	],
 	function(
 		isHtml5Ejecta,
-		isHtml5GameClosure
+		isHtml5TeaLeaf
 	) {
 		'use strict'
 
@@ -29198,17 +28985,17 @@ define(
 		return {
 			logEvent : function( eventName, timed ) {
 				if( isHtml5Ejecta ) {
-					ejecta.flurryLogEvent( eventName, timed )
+					//ejecta.flurryLogEvent( eventName, timed )
 
-				} else if( isHtml5GameClosure ) {
+				} else if( isHtml5TeaLeaf ) {
 					NATIVE.flurry.logEvent( eventName )
 				}
 			},
 			endTimedEvent : function( eventName ) {
 				if( isHtml5Ejecta ) {
-					ejecta.flurryEndTimedEvent( eventName )
+					//ejecta.flurryEndTimedEvent( eventName )
 
-				} else if( isHtml5GameClosure ) {
+				} else if( isHtml5TeaLeaf ) {
 					NATIVE.flurry.endTimedEvent( eventName )
 				}
 			}
@@ -30170,11 +29957,11 @@ define(
 define(
 	'spell/shared/util/platform/private/sound/getFileExtOfSupportedFormat',
 	[
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/environment/isHtml5WinPhone'
 	],
 	function(
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		isHtml5WinPhone
 	) {
 		'use strict'
@@ -30206,7 +29993,7 @@ define(
 				return 'wav'
 			}
 
-			if( isHtml5GameClosure ) {
+			if( isHtml5TeaLeaf ) {
 				return 'mp3'
 			}
 
@@ -43525,12 +43312,12 @@ define(
 define(
 	'spell/shared/util/platform/private/Application',
 	[
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/environment/isHtml5Tizen',
 		'spell/shared/util/platform/private/environment/isHtml5WinPhone'
 	],
 	function(
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 	    isHtml5Tizen,
 		isHtml5WinPhone
 	) {
@@ -43539,7 +43326,7 @@ define(
 
 		return {
 			close : function() {
-				if( isHtml5GameClosure ) {
+				if( isHtml5TeaLeaf ) {
 					NATIVE.sendActivityToBack()
 
 				} else if ( isHtml5Tizen ) {
@@ -44653,7 +44440,7 @@ define(
 )
 
 define(
-	'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+	'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 	function() {
 		'use strict'
 
@@ -44676,13 +44463,13 @@ define(
 	'spell/shared/util/platform/private/advertisement',
 	[
 		'spell/shared/util/platform/private/environment/isHtml5Ejecta',
-		'spell/shared/util/platform/private/environment/isHtml5GameClosure',
+		'spell/shared/util/platform/private/environment/isHtml5TeaLeaf',
 		'spell/shared/util/platform/private/registerTimer',
 		'spell/functions'
 	],
 	function(
 		isHtml5Ejecta,
-		isHtml5GameClosure,
+		isHtml5TeaLeaf,
 		registerTimer,
 		_
 	) {
@@ -44724,7 +44511,7 @@ define(
 				if( isHtml5Ejecta ) {
 					document.addEventListener( 'interstitial', processInterstitialPartial )
 
-				} else if( isHtml5GameClosure ) {
+				} else if( isHtml5TeaLeaf ) {
 					NATIVE.events.registerHandler( 'interstitial', processInterstitialPartial )
 				}
 
@@ -44732,17 +44519,17 @@ define(
 			},
 			loadInterstitial : function() {
 				if( isHtml5Ejecta ) {
-					ejecta.loadInterstitial()
+					//ejecta.loadInterstitial()
 
-				} else if( isHtml5GameClosure ) {
+				} else if( isHtml5TeaLeaf ) {
 					NATIVE.plugins.sendEvent( 'AdMobPlugin', 'loadInterstitial', JSON.stringify( {} ) )
 				}
 			},
 			showInterstitial : function() {
 				if( isHtml5Ejecta ) {
-					ejecta.showInterstitial()
+					//ejecta.showInterstitial()
 
-				} else if( isHtml5GameClosure ) {
+				} else if( isHtml5TeaLeaf ) {
 					NATIVE.plugins.sendEvent( 'AdMobPlugin', 'showInterstitial', JSON.stringify( {} ) )
 				}
 			}

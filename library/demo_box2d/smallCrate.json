@@ -1,20 +1,21 @@
 {
 	"version": 1,
 	"type": "entityTemplate",
+	"dependencies": [
+		"demo_box2d.crate_wood_2",
+		"spell.component.2d.graphics.appearance",
+		"spell.component.2d.graphics.geometry.quad",
+		"spell.component.2d.transform",
+		"spell.component.physics.body",
+		"spell.component.physics.fixture",
+		"spell.component.physics.shape.box",
+		"spell.component.visualObject"
+	],
 	"config": {
 		"spell.component.2d.graphics.appearance": {
 			"assetId": "appearance:demo_box2d.crate_wood_2"
 		},
-		"spell.component.2d.transform": {
-			"scale": [
-				0.031,
-				0.031
-			],
-			"translation": [
-				0,
-				0
-			]
-		},
+		"spell.component.2d.transform": {},
 		"spell.component.physics.body": {
 			"type": "dynamic"
 		},
@@ -25,7 +26,13 @@
 				2
 			]
 		},
-		"spell.component.visualObject": {}
+		"spell.component.visualObject": {},
+		"spell.component.2d.graphics.geometry.quad": {
+			"dimensions": [
+				2,
+				2
+			]
+		}
 	},
 	"children": []
 }

@@ -4,13 +4,15 @@
 	"title": "",
 	"doc": "",
 	"icon": "",
+	"dependencies": [],
+	"group": "zzz",
 	"attributes": [
 		{
 			"name": "refEntityName",
 			"default": "camera",
+			"doc": "name of entity which translation should function as reference for the parallax effect",
 			"engineInternal": false,
-			"type": "string",
-			"doc": "name of entity which translation should function as reference for the parallax effect"
+			"type": "string"
 		},
 		{
 			"name": "moveSpeed",
@@ -18,9 +20,9 @@
 				1,
 				1
 			],
+			"doc": "the speed factor for the parallax effect which will be multiplied with the reference entity's translation",
 			"engineInternal": false,
-			"type": "vec2",
-			"doc": "the speed factor for the parallax effect which will be multiplied with the reference entity's translation"
+			"type": "vec2"
 		},
 		{
 			"name": "textureOffset",
@@ -28,24 +30,23 @@
 				0,
 				0
 			],
+			"doc": "an offset which will added to the parallax texture matrix (useful to set a starting texture position)",
 			"engineInternal": false,
-			"type": "vec2",
-			"doc": "an offset which will added to the parallax texture matrix (useful to set a starting texture position)"
+			"type": "vec2"
 		},
 		{
 			"name": "repeatX",
 			"default": false,
+			"doc": "specifies if this parallax layer will repeat itselfs in the x direction",
 			"engineInternal": false,
-			"type": "boolean",
-			"doc": "specifies if this parallax layer will repeat itselfs in the x direction"
+			"type": "boolean"
 		},
 		{
 			"name": "repeatY",
 			"default": false,
+			"doc": "specifies if this parallax layer will repeat itselfs in the y direction",
 			"engineInternal": false,
-			"type": "boolean",
-			"doc": "specifies if this parallax layer will repeat itselfs in the y direction"
+			"type": "boolean"
 		}
-
 	]
 }

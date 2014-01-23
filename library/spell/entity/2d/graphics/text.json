@@ -1,11 +1,16 @@
 {
-    "type": "entityTemplate",
-    "config": {
-        "spell.component.2d.graphics.textAppearance": {},
-        "spell.component.2d.transform": {},
-        "spell.component.visualObject": {}
-    },
-    "children": [],
-    "version": 1
+	"version": 1,
+	"type": "entityTemplate",
+	"dependencies": [
+		"spell.OpenSans14px",
+		"spell.component.2d.graphics.textAppearance",
+		"spell.component.2d.transform",
+		"spell.component.visualObject"
+	],
+	"config": {
+		"spell.component.2d.graphics.textAppearance": {},
+		"spell.component.2d.transform": {},
+		"spell.component.visualObject": {}
+	},
+	"children": []
 }
-
