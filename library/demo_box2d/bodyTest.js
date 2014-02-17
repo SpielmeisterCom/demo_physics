@@ -122,7 +122,7 @@ define(
 					var id = spell.entityManager.getEntityIdsByName( 'player' )[ 0 ]
 
 					if( id ) {
-						spell.physicsWorlds.main.applyImpulse( id, [ 0, 250 ] )
+						spell.physicsManager.applyImpulse( id, [ 0, 250 ] )
 					}
 				}
 			}

@@ -99,7 +99,7 @@
 	},
 	"startScene": "demo_box2d.scene.Scene1",
 	"type": "project",
-	"apiVersion": "0.9.5",
+	"apiVersion": "0.9.9",
 	"scenes": [
 		"demo_box2d.scene.Scene1"
 	]
