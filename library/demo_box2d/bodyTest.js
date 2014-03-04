@@ -73,7 +73,7 @@ define(
 						removeCrate( spell.entityManager )
 						
 					} else if( keyCode === spell.inputManager.KEY.V ) {
-						spell.audioContext.play( spell.assetManager.get( 'sound:demo_box2d.voiceSample' ).resource )
+                        spell.audioContext.play( spell.assetManager.get( 'sound:demo_box2d.voiceSample' ) )
 					}
 				}
 
