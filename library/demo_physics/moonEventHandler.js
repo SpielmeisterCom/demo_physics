@@ -18,7 +18,7 @@ define(
             },
             preSolve: function( spell, entityId, otherEntityId, arbiter ) {
 
-                arbiter.setAcceptedState( false )
+                //arbiter.setAcceptedState( false )
             },
             progress: function() {
 //                console.log("Moon progress")

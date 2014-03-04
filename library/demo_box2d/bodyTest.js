@@ -22,9 +22,8 @@ define(
 			var id = _.find(
 				_.keys( components ),
 				function( id ) {
-					var entityMetaData = entityManager.getComponentById( id, 'spell.component.entityMetaData' )
-
-					return entityMetaData.name === ''
+					var entityMetaData = entityManager.getComponentById( id, 'spell.component.metaData' )
+					return entityMetaData && entityMetaData.name === ''
 				}
 			)
 

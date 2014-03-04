@@ -26,7 +26,9 @@
 				2
 			]
 		},
-		"spell.component.visualObject": {},
+		"spell.component.visualObject": {
+            "layer": 1
+        },
 		"spell.component.2d.graphics.geometry.quad": {
 			"dimensions": [
 				2,

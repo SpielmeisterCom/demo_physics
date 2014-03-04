@@ -13,12 +13,22 @@
 				"id": "spell.system.physics",
 				"config": {
 					"active": true,
-					"debug": true,
 					"gravity": [
 						0,
 						-10
 					],
-					"scale": 1
+					"scale": 1,
+					"velocityIterations": 8,
+					"positionIterations": 8,
+					"showConstraints": false,
+					"showContacts": false,
+					"showContactImpulses": false,
+					"showRigidBodies": false,
+					"showColliderShapes": false,
+					"showSensorShapes": false,
+					"showBodyDetail": false,
+					"showShapeDetail": false,
+					"debug": true
 				}
 			},
 			{
@@ -51,7 +61,12 @@
 				"id": "spell.system.render",
 				"config": {
 					"active": true,
-					"debug": true
+					"debug": true,
+					"clearColor": [
+						0,
+						0,
+						0
+					]
 				}
 			},
 			{
@@ -151,7 +166,9 @@
 						0.133333
 					]
 				},
-				"spell.component.visualObject": {},
+				"spell.component.visualObject": {
+					"layer": 1
+				},
 				"spell.component.2d.graphics.appearance": {
 					"assetId": "appearance:demo_box2d.player"
 				},
@@ -225,7 +242,9 @@
 						4
 					]
 				},
-				"spell.component.visualObject": {},
+				"spell.component.visualObject": {
+					"layer": 1
+				},
 				"spell.component.2d.graphics.appearance": {
 					"assetId": "appearance:demo_box2d.moon"
 				},
@@ -251,7 +270,9 @@
 					"type": "dynamic"
 				},
 				"spell.component.physics.fixture": {},
-				"spell.component.visualObject": {},
+				"spell.component.visualObject": {
+					"layer": 1
+				},
 				"spell.component.2d.graphics.animatedAppearance": {
 					"assetId": "animation:demo_box2d.glowingBoxAnimation"
 				},
@@ -331,9 +352,7 @@
 						9
 					]
 				},
-				"spell.component.visualObject": {
-					"layer": 0
-				},
+				"spell.component.visualObject": {},
 				"spell.component.2d.graphics.geometry.quad": {
 					"dimensions": [
 						32,
